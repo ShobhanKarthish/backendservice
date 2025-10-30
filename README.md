@@ -47,3 +47,14 @@ It handles user management, preferences, and posts with proper data validation a
    ```bash
    git clone https://github.com/ShobhanKarthish/backendservice.git
    cd backendservice
+2. Install dependencies
+   ```bash
+   npm install
+3. Create a .env file in the root directory
+    ```bash
+    PORT=3000
+    MONGO_URI=<your_mongo_connection_string>
+4. Run the development server
+   ```bash
+   npm run dev
+
