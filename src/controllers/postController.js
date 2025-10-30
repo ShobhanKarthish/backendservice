@@ -1,3 +1,4 @@
+import User from "../models/userModel.js";
 import Post from "../models/postModel.js";
 
 // Create Post
@@ -5,6 +6,11 @@ export const createPost = async (req, res) => {
   try {
     const { userId } = req.params;
     const { title, content } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    if (user.isDeleted)
+      return res.status(403).json({ message: "User is soft-deleted" });
 
     const post = await Post.create({ userId, title, content });
     res.status(201).json(post);
