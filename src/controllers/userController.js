@@ -46,3 +46,36 @@ export const softDeleteUser = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+export const hardDeleteUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId);
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user.isDeleted)
+      return res
+        .status(400)
+        .json({ message: "User must be soft deleted first" });
+
+    const now = Date.now();
+    const deletedAt = new Date(user.deletedAt);
+    const timeDiff = now - deletedAt;
+
+    const hoursSinceDeletion = timeDiff / (1000 * 60 * 60);
+
+    if (hoursSinceDeletion < 24) {
+      return res.status(403).json({
+        message:
+          "User cannot be permanently deleted before 24 hours of soft deletion.",
+      });
+    }
+
+    await User.findByIdAndDelete(userId);
+    res.status(200).json({ message: "User permanently deleted." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
