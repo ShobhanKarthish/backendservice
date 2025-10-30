@@ -2,6 +2,8 @@ import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import userRoutes from "./routes/userRoutes.js";
+import preferenceRoutes from "./routes/preferenceRoutes.js";
+
 
 dotenv.config();
 const app = express();
@@ -14,6 +16,7 @@ mongoose
 
 app.get("/", (req, res) => res.send("Backend Service is running"));
 app.use("/api/v1/users", userRoutes);
+app.use("/api/v1", preferenceRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
