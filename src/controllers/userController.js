@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
 import User from "../models/userModel.js";
-import Post from "../models/postModel.js"; // required for cascade delete
+import Post from "../models/postModel.js";
+import Preference from "../models/preferenceModel.js";
 
-// create user  
 export const createUser = async (req, res) => {
   try {
     const { username, email, role } = req.body;
@@ -25,7 +25,6 @@ export const createUser = async (req, res) => {
   }
 };
 
-// update user
 export const getUser = async (req, res) => {
   try {
     const user = await User.findOne({
@@ -39,7 +38,6 @@ export const getUser = async (req, res) => {
   }
 };
 
-// update user
 export const updateUser = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -64,7 +62,6 @@ export const updateUser = async (req, res) => {
   }
 };
 
-// soft delete user (transactional)
 export const softDeleteUser = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -84,13 +81,11 @@ export const softDeleteUser = async (req, res) => {
       return res.status(400).json({ message: "User already deleted" });
     }
 
-    // soft delete user
     user.isDeleted = true;
     user.deletedAt = new Date();
     user.audit.push({ action: "SOFT_DELETE" });
     await user.save({ session });
 
-    // cascade soft delete for posts
     await Post.updateMany(
       { userId: userId, isDeleted: false },
       { $set: { isDeleted: true, deletedAt: new Date() } },
@@ -109,24 +104,31 @@ export const softDeleteUser = async (req, res) => {
   }
 };
 
-// hard delete user
 export const hardDeleteUser = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
     const { userId } = req.params;
-    const user = await User.findById(userId);
 
-    if (!user) return res.status(404).json({ message: "User not found" });
-    if (!user.isDeleted)
-      return res
-        .status(400)
-        .json({ message: "User must be soft deleted first" });
+    const user = await User.findById(userId).session(session);
+    if (!user) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!user.isDeleted) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ message: "User must be soft deleted first" });
+    }
 
     const now = Date.now();
     const deletedAt = new Date(user.deletedAt);
-    const timeDiff = now - deletedAt;
-    const hoursSinceDeletion = timeDiff / (1000 * 60 * 60);
-
+    const hoursSinceDeletion = (now - deletedAt.getTime()) / (1000 * 60 * 60);
     if (hoursSinceDeletion < 24) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(403).json({
         message:
           "User cannot be permanently deleted before 24 hours of soft deletion.",
@@ -134,12 +136,22 @@ export const hardDeleteUser = async (req, res) => {
     }
 
     user.audit.push({ action: "HARD_DELETE" });
-    await user.save();
+    await user.save({ session });
 
-    await User.findByIdAndDelete(userId);
-    res.status(200).json({ message: "User permanently deleted." });
+    await Promise.all([
+      Post.deleteMany({ userId }, { session }),
+      Preference.deleteMany({ userId }, { session }),
+      User.deleteOne({ _id: userId }, { session }),
+    ]);
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(200).json({ message: "User, posts, and preferences permanently deleted" });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+    await session.abortTransaction();
+    session.endSession();
+    console.error("Hard delete error:", err.message);
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 };
