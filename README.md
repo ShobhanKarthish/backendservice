@@ -8,11 +8,17 @@ It handles user management, preferences, and posts with proper data validation a
 ## Features
 
 -User APIs for create, read, update, soft delete, and hard delete (with 24-hour grace period)
+
 -Preferences APIs to create or update user preferences
+
 -Post APIs to create, read, and soft delete user posts
+
 -MongoDB and Mongoose used for data modeling
+
 -Jest and Supertest integration for unit and API testing
+
 -Dockerized setup for quick and isolated deployment (includes both Node.js app and MongoDB)
+
 -Simple and modular folder structure for scalability and maintainability
 
 ---
