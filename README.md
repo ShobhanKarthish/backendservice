@@ -37,7 +37,9 @@ It handles user management, preferences, and posts with proper data validation a
 - Node.js  
 - Express.js  
 - MongoDB  
-- Mongoose  
+- Mongoose
+- Jest & Supertest
+- Docker
 
 ---
 
