@@ -45,18 +45,97 @@ It handles user management, preferences, and posts with proper data validation a
 
 ## Setup
 
-1. Clone this repository  
-   ```bash
-   git clone https://github.com/ShobhanKarthish/backendservice.git
-   cd backendservice
-2. Install dependencies
-   ```bash
-   npm install
-3. Create a .env file in the root directory
-    ```bash
-    PORT=3000
-    MONGO_URI=<your_mongo_connection_string>
-4. Run the development server
-   ```bash
-   npm run dev
+There are two ways to run this project:
+
+---
+
+### 1. Run with Docker (Recommended)
+
+This is the fastest and easiest way to run the entire application (Node.js app + MongoDB) in a containerized environment. It provides a one-command setup and isolates all dependencies.
+
+#### Prerequisites
+
+* Docker Desktop installed and running
+
+#### Instructions
+
+Clone the repository:
+
+```bash
+git clone https://github.com/ShobhanKarthish/backendservice.git
+cd backendservice
+```
+
+Run the application:
+
+```bash
+docker compose up --build
+```
+
+The service will be available at:
+[http://localhost:3000](http://localhost:3000)
+
+---
+
+### 2. Run Locally (Development Mode)
+
+Use this method if you want to run the app directly on your machine for debugging or local development.
+
+#### Prerequisites
+
+* Node.js (v18 or later)
+* MongoDB (running locally or remote)
+
+#### Instructions
+
+Clone this repository:
+
+```bash
+git clone https://github.com/ShobhanKarthish/backendservice.git
+cd backendservice
+```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Create a .env file in the root directory:
+
+```bash
+PORT=3000
+MONGO_URI=<your_mongo_connection_string>
+```
+
+Run the development server:
+
+```bash
+npm run dev
+```
+
+The service will be available at:
+[http://localhost:3000](http://localhost:3000)
+
+---
+
+### Run Tests (Jest + Supertest)
+
+To execute all test cases:
+
+```bash
+npm test
+```
+
+---
+
+### Docker Commands Reference
+
+| Command                        | Description                    |
+| ------------------------------ | ------------------------------ |
+| `docker compose up --build`    | Build and start the containers |
+| `docker compose down`          | Stop and remove all containers |
+| `docker ps`                    | Check running containers       |
+| `docker logs <container_name>` | View logs for a container      |
+
 
