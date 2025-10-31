@@ -16,8 +16,7 @@ router.put("/:userId", updateUser)
 router.post("/", createUser);
 router.get("/:userId", getUser);
 router.delete("/:userId", softDeleteUser);
-router.delete("/purge/:userId", hardDeleteUser);
-router.delete("/:userId/hard", hardDeleteUser);
+router.post("/:userId/purge", hardDeleteUser);
 
 
 export default router;

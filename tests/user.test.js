@@ -7,13 +7,13 @@ import { MongoMemoryServer } from "mongodb-memory-server";
 import app from "../src/index.js";
 import User from "../src/models/userModel.js";
 
-// ✅ Import jest explicitly for ESM
+
 import { jest } from "@jest/globals";
 
 let mongoServer;
 let userId;
 
-jest.setTimeout(30000); // global safety timeout
+jest.setTimeout(30000); 
 
 beforeAll(async () => {
   mongoServer = await MongoMemoryServer.create();
@@ -68,7 +68,9 @@ describe("User API Tests (FR1–FR5)", () => {
       const moreThan24hAgo = new Date(Date.now() - 25 * 60 * 60 * 1000);
       await User.findByIdAndUpdate(userId, { deletedAt: moreThan24hAgo, isDeleted: true });
 
-      const res = await request(app).delete(`/api/v1/users/${userId}/hard`);
+      
+      const res = await request(app).post(`/api/v1/users/${userId}/purge`);
+      
       expect(res.status).toBe(200);
       expect(res.body.message).toMatch(/permanently deleted/i);
 
