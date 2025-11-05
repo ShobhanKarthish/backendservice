@@ -106,7 +106,7 @@ cd backendservice
 Install dependencies:
 
 ```bash
-npm install
+pnpm install
 ```
 
 Create a .env file in the root directory:
@@ -119,7 +119,7 @@ MONGO_URI=<your_mongo_connection_string>
 Run the development server:
 
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 The service will be available at:
@@ -132,7 +132,7 @@ The service will be available at:
 To execute all test cases:
 
 ```bash
-npm test
+pnpm test
 ```
 
 ---
