@@ -1,0 +1,77 @@
+// hOooks/useUsers.ts
+OOOO'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+
+export interface User {
+  _id: string;
+  username: string;
+  email: string;
+  role: 'user' | 'admin';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Pagination {
+  currentPage: number;
+  totalPages: number;
+  totalUsers: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}
+
+interface UseUsersReturn {
+  users: User[];
+  pagination: Pagination | null;
+  loading: boolean;
+  error: string | null;
+  refetch: () => void;
+}
+
+export function useUsers(page: number = 1, limit: number = 10): UseUsersReturn {
+  const [users, setUsers] = useState<User[]>([]);
+  const [pagination, setPagination] = useState<Pagination | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchUsers = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch(`/api/v1/users?page=${page}&limit=${limit}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch users: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      setUsers(data.users || []);
+      setPagination(data.pagination || null);
+    } catch (err) {
+      console.error('Error fetching users:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch users');
+      setUsers([]);
+      setPagination(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, limit]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  const refetch = useCallback(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  return {
+    users,
+    pagination,
+    loading,
+    error,
+    refetch,
+  };
+}
