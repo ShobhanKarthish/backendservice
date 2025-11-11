@@ -18,23 +18,16 @@ if (process.env.NODE_ENV !== "test") {
   console.log("Attempting to connect to MongoDB...");
   console.log("MONGO_URI:", process.env.MONGO_URI);
 
-  // Try connecting to the provided MongoDB URI first with options to avoid buffering
+  // Try connecting to the provided MongoDB URI first
   const connectWithRetry = async () => {
     try {
       // For MongoDB Atlas, we'll use different connection options
       const isAtlasConnection = process.env.MONGO_URI.includes('mongodb+srv');
       
       const connectionOptions = {
-        bufferCommands: false, // Disable mongoose buffering
-        bufferMaxEntries: 0,   // Disable mongoose buffering
-        serverSelectionTimeoutMS: 30000, // Increased timeout for cloud connections
+        serverSelectionTimeoutMS: 10000, // Timeout for server selection
         socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
-        ...(isAtlasConnection && {
-          maxPoolSize: 10, // Maintain up to 10 socket connections
-          serverSelectionTimeoutMS: 5000, // Keep it reasonable for server selection
-          socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
-          family: 4, // Use IPv4, skip trying IPv6
-        })
+        family: 4, // Use IPv4, skip trying IPv6
       };
       
       console.log("Connecting to MongoDB...");
@@ -50,8 +43,7 @@ if (process.env.NODE_ENV !== "test") {
         const mongod = await MongoMemoryServer.create();
         const uri = mongod.getUri();
         await mongoose.connect(uri, {
-          bufferCommands: false,
-          bufferMaxEntries: 0,
+          serverSelectionTimeoutMS: 10000,
         });
         console.log("Connected to in-memory MongoDB server");
         console.log("Using in-memory database for development");
