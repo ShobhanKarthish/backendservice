@@ -17,6 +17,7 @@ const userSchema = new mongoose.Schema({
     unique: true,
     match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
   },
+  password: { type: String, required: true },
   role: { type: String, enum: ["user", "admin"], default: "user" },
   isDeleted: { type: Boolean, default: false },
   deletedAt: { type: Date },

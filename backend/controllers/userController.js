@@ -3,26 +3,71 @@ import User from "../models/userModel.js";
 import Post from "../models/postModel.js";
 import Preference from "../models/preferenceModel.js";
 
+// Get All Users (for User List Page)
+export const getAllUsers = async (req, res) => {
+  try {
+    // Parse pagination parameters from query string
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Fetch users (exclude soft-deleted ones and passwords)
+    const users = await User.find({ isDeleted: false })
+      .select('username email role createdAt updatedAt') // Select only necessary fields, exclude password
+      .sort({ createdAt: -1 }) // Sort by newest first
+      .skip(skip)
+      .limit(limit);
+
+    // Get total count for pagination
+    const totalUsers = await User.countDocuments({ isDeleted: false });
+    const totalPages = Math.ceil(totalUsers / limit);
+
+    res.status(200).json({
+      users,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalUsers,
+        usersPerPage: limit,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
+      }
+    });
+  } catch (err) {
+    console.error("Error fetching users:", err.message);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
 // Create User (FR1)
 export const createUser = async (req, res) => {
   try {
-    const { username, email, role } = req.body;
+    const { username, email, role, password } = req.body;
 
     if (!username || !email)
       return res.status(400).json({ message: "Username and Email ID Required" });
+
+    if (!password)
+      return res.status(400).json({ message: "Password is required" });
 
     const existing = await User.findOne({ username });
     if (existing)
       return res.status(409).json({ message: "Username already exists" });
 
-    const user = await User.create({ username, email, role });
-    user.audit.push({ action: "CREATE", details: { username, email } });
+    // For now, we'll store the password as plain text (not recommended for production)
+    // In production, you should hash the password using bcrypt
+    const user = await User.create({ username, email, role, password });
+    user.audit.push({ action: "CREATE", details: { username, email, role } });
     await user.save();
 
-    res.status(201).json(user);
+    // Don't return the password in the response
+    const userResponse = user.toObject();
+    delete userResponse.password;
+
+    res.status(201).json(userResponse);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+    console.error("Create user error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 };
 
@@ -32,7 +77,8 @@ export const getUser = async (req, res) => {
     const user = await User.findOne({
       _id: req.params.userId,
       isDeleted: false,
-    });
+    }).select('-password'); // Exclude password from response
+    
     if (!user) return res.status(404).json({ message: "User not found" });
     res.status(200).json(user);
   } catch {
@@ -44,21 +90,31 @@ export const getUser = async (req, res) => {
 export const updateUser = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { username, email, role } = req.body;
+    const { username, email, role, password } = req.body;
+
+    // Build update object - only include password if provided
+    const updateData = { username, email, role, updatedAt: Date.now() };
+    if (password && password.trim() !== '') {
+      updateData.password = password;
+    }
 
     const updatedUser = await User.findOneAndUpdate(
       { _id: userId, isDeleted: false },
-      { username, email, role, updatedAt: Date.now() },
+      updateData,
       { new: true, runValidators: true }
     );
 
     if (!updatedUser)
       return res.status(404).json({ message: "User not found or deleted" });
 
-    updatedUser.audit.push({ action: "UPDATE", details: { username, email, role } });
+    updatedUser.audit.push({ action: "UPDATE", details: { username, email, role, passwordChanged: !!password } });
     await updatedUser.save();
 
-    res.status(200).json(updatedUser);
+    // Don't return the password in the response
+    const userResponse = updatedUser.toObject();
+    delete userResponse.password;
+
+    res.status(200).json(userResponse);
   } catch (err) {
     console.error("Error updating user:", err.message);
     res.status(500).json({ message: "Server error", error: err.message });
