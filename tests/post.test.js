@@ -4,9 +4,9 @@
 import request from "supertest";
 import mongoose from "mongoose";
 import { MongoMemoryServer } from "mongodb-memory-server";
-import app from "../src/index.js";
-import User from "../src/models/userModel.js";
-import Post from "../src/models/postModel.js";
+import app from "../backend/index.js";
+import User from "../backend/models/userModel.js";
+import Post from "../backend/models/postModel.js";
 
 
 import { jest } from "@jest/globals";
